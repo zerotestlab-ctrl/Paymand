@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Terminal, CheckCircle2, Copy, Check } from "lucide-react";
+import { Play, Terminal, CheckCircle2, Copy, Check, Wallet, ShieldCheck, ExternalLink } from "lucide-react";
 import { useCreateReceipt } from "@/hooks/use-receipts";
 import type { ReceiptResponse } from "@shared/routes";
 import { TransactionHistory } from "@/components/TransactionHistory";
@@ -34,13 +34,16 @@ export default function Home() {
     await new Promise(r => setTimeout(r, 800));
     
     addLog("🔍 Scanning for x402 paywall...");
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise(r => setTimeout(r, 1000));
+
+    addLog("⚠️ HTTP 402: Payment Required (x402-standard)");
+    await new Promise(r => setTimeout(r, 800));
     
     addLog("💰 Found premium service • 0.001 USDC");
     await new Promise(r => setTimeout(r, 800));
 
     try {
-      const proofHex = "0x" + Math.random().toString(36).substring(2) + Date.now().toString(16);
+      const proofHex = "0x" + Array.from({length: 40}, () => Math.floor(Math.random() * 16).toString(16)).join("");
       
       const result = await createReceipt.mutateAsync({
         amount: "0.001",
@@ -72,6 +75,27 @@ export default function Home() {
     <div className="min-h-screen bg-zinc-950 text-white p-6 md:p-12 font-mono selection:bg-emerald-500/30 selection:text-emerald-200">
       <div className="max-w-2xl mx-auto">
         
+        {/* Wallet Connection Status */}
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-12 p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <Wallet className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Agent Wallet</span>
+              <span className="text-sm text-zinc-300 font-bold">0x7aF4...kP9q</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Base Sepolia Testnet
+          </div>
+        </motion.div>
+
         {/* Header Section */}
         <header className="mb-10 text-center sm:text-left">
           <motion.div 
@@ -145,13 +169,18 @@ export default function Home() {
             {logs.length === 0 && !isRunning && (
               <div className="text-zinc-600 italic">Waiting for execution command...</div>
             )}
-            <AnimatePresence>
+            <AnimatePresence mode="popLayout">
               {logs.map((log, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className={`flex items-start gap-3 ${log.includes("✅") ? "text-emerald-400" : log.includes("❌") ? "text-red-400" : "text-emerald-300/80"}`}
+                  className={`flex items-start gap-3 ${
+                    log.includes("✅") ? "text-emerald-400" : 
+                    log.includes("❌") ? "text-red-400" : 
+                    log.includes("⚠️") ? "text-amber-400" :
+                    "text-emerald-300/80"
+                  }`}
                 >
                   <span className="opacity-30 text-xs mt-0.5">{(new Date()).toISOString().split('T')[1].substring(0, 8)}</span>
                   <span>{log}</span>
@@ -173,13 +202,26 @@ export default function Home() {
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full -mr-16 -mt-16 pointer-events-none" />
               
-              <div className="font-bold text-emerald-400 flex items-center gap-2 mb-4">
-                <CheckCircle2 className="w-5 h-5" /> 
-                RECEIPT SECURED
+              <div className="flex items-center justify-between mb-4">
+                <div className="font-bold text-emerald-400 flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5" /> 
+                  RECEIPT SECURED
+                </div>
+                <a 
+                  href={`https://sepolia.basescan.org/tx/${receipt.proof}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-zinc-500 hover:text-emerald-400 flex items-center gap-1 transition-colors uppercase tracking-widest font-bold"
+                >
+                  View on Explorer <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
               
-              <div className="bg-black/50 p-4 md:p-6 rounded-2xl border border-zinc-800 overflow-x-auto text-xs md:text-sm text-zinc-300">
-                <pre className="text-emerald-300/90 leading-relaxed">
+              <div 
+                onClick={() => window.open(`https://sepolia.basescan.org/tx/${receipt.proof}`, '_blank')}
+                className="bg-black/50 p-4 md:p-6 rounded-2xl border border-zinc-800 overflow-x-auto text-xs md:text-sm text-zinc-300 cursor-pointer hover:border-emerald-500/20 transition-colors group/receipt"
+              >
+                <pre className="text-emerald-300/90 leading-relaxed group-hover/receipt:text-emerald-300 transition-colors">
 {JSON.stringify(receipt, null, 2)}
                 </pre>
               </div>
@@ -220,6 +262,14 @@ export default function Home() {
 
         {/* Transaction History Section */}
         <TransactionHistory />
+
+        {/* Footer Badge */}
+        <footer className="mt-12 mb-24 flex justify-center">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900/50 border border-zinc-800 text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+            <ShieldCheck className="w-3 h-3 text-emerald-500/50" />
+            Powered by x402 • Celer State Channels • Testnet (no real funds moved)
+          </div>
+        </footer>
 
       </div>
     </div>
