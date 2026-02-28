@@ -1,18 +1,22 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, numeric, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+export const receipts = pgTable("receipts", {
+  id: serial("id").primaryKey(),
+  receiptId: text("receipt_id").notNull(),
+  amount: numeric("amount").notNull(),
+  channel: text("channel").notNull(),
+  proof: text("proof").notNull(),
+  description: text("description").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-});
+export const insertReceiptSchema = createInsertSchema(receipts).omit({ id: true, createdAt: true });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type Receipt = typeof receipts.$inferSelect;
+export type InsertReceipt = z.infer<typeof insertReceiptSchema>;
+
+export type CreateReceiptRequest = InsertReceipt;
+export type ReceiptResponse = Receipt;
+export type ReceiptsListResponse = Receipt[];
