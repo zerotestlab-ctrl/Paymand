@@ -32,6 +32,9 @@ export default function Home() {
 
     addLog("🤖 Agent waking up...");
     await new Promise(r => setTimeout(r, 800));
+
+    addLog("🔗 Using Base Sepolia testnet (eip155:84532) via x402 facilitator");
+    await new Promise(r => setTimeout(r, 600));
     
     addLog("🔍 Scanning for x402 paywall...");
     await new Promise(r => setTimeout(r, 1000));
@@ -86,13 +89,13 @@ export default function Home() {
               <Wallet className="w-4 h-4 text-emerald-400" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Agent Wallet</span>
-              <span className="text-sm text-zinc-300 font-bold">0x7aF4...kP9q</span>
+              <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">0x7aF4...kP9q (Agent Wallet)</span>
+              <span className="text-sm text-zinc-300 font-bold">Connected to Base Sepolia Testnet (eip155:84532) • Test USDC</span>
             </div>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Base Sepolia Testnet
+            Base Sepolia
           </div>
         </motion.div>
 
@@ -217,12 +220,31 @@ export default function Home() {
                 </a>
               </div>
               
-              <div 
-                onClick={() => window.open(`https://sepolia.basescan.org/tx/${receipt.proof}`, '_blank')}
-                className="bg-black/50 p-4 md:p-6 rounded-2xl border border-zinc-800 overflow-x-auto text-xs md:text-sm text-zinc-300 cursor-pointer hover:border-emerald-500/20 transition-colors group/receipt"
+              <div className="bg-black/50 p-4 md:p-6 rounded-2xl border border-zinc-800 overflow-x-auto text-xs md:text-sm text-zinc-300 cursor-pointer hover:border-emerald-500/20 transition-colors group/receipt"
               >
                 <pre className="text-emerald-300/90 leading-relaxed group-hover/receipt:text-emerald-300 transition-colors">
-{JSON.stringify(receipt, null, 2)}
+{(() => {
+  const json = JSON.stringify(receipt, null, 2);
+  const proofLabel = `"proof": "${receipt.proof}"`;
+  const parts = json.split(proofLabel);
+  return (
+    <>
+      {parts[0]}
+      {`"proof": "`}
+      <a 
+        href={`https://sepolia.basescan.org/tx/${receipt.proof}`} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="text-emerald-400 underline decoration-emerald-400/30 hover:decoration-emerald-400 transition-all"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {receipt.proof}
+      </a>
+      {`"`}
+      {parts[1]}
+    </>
+  );
+})()}
                 </pre>
               </div>
             </motion.div>
@@ -251,9 +273,11 @@ export default function Home() {
           
           <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-900 overflow-x-auto">
             <code className="block text-sm text-zinc-300 leading-loose">
+              <span className="text-zinc-500 font-mono text-[10px] block mb-2">// Base Sepolia Testnet config</span>
               <span className="text-pink-400">const</span> <span className="text-blue-400">paymand</span> <span className="text-pink-400">= new</span> <span className="text-yellow-200">Paymand</span>({`{ `}
                 <span className="text-zinc-400">maxSpend:</span> <span className="text-purple-400">0.1</span>, 
-                <span className="text-zinc-400"> channel:</span> <span className="text-amber-300">"celer"</span>
+                <span className="text-zinc-400"> channel:</span> <span className="text-amber-300">"celer"</span>,
+                <span className="text-zinc-400"> chainId:</span> <span className="text-purple-400">84532</span>
               {` }`});<br/>
               <span className="text-blue-400">agent</span>.<span className="text-yellow-200">addTool</span>(<span className="text-blue-400">paymand</span>.<span className="text-zinc-300">tool</span>);
             </code>
@@ -267,7 +291,7 @@ export default function Home() {
         <footer className="mt-12 mb-24 flex justify-center">
           <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900/50 border border-zinc-800 text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
             <ShieldCheck className="w-3 h-3 text-emerald-500/50" />
-            Powered by x402 • Celer State Channels • Testnet (no real funds moved)
+            Running on Base Sepolia Testnet • Real x402 + Celer simulation • No real funds moved (yet)
           </div>
         </footer>
 
