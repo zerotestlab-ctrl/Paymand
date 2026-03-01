@@ -46,7 +46,8 @@ cd Paymand
 npm install
 npm run dev
 ---
-##Open http://localhost:5173 (or the Vite port shown).2. One-line SDK Example (copy-paste into any agent)ts
+
+Open http://localhost:5173 (or the Vite port shown).2. One-line SDK Example (copy-paste into any agent)ts
 
 
 import Paymand from './path-to-paymand-sdk';
@@ -75,7 +76,7 @@ Click any proof hash → opens real Basescan (testnet)
 All transactions saved in the Ledger below
 
 
-### Architecture
+Architecture
 
 Paymand/
 ├── client/          # React + Tailwind frontend (Vite)
@@ -96,7 +97,7 @@ Core SDK: Pure TypeScript class with mandates + x402 handler
 Testnet: Base Sepolia (Chain ID 84532)
 
 
-### Roadmap (Next 30 Days)Real x402 + Celer testnet integration (live micropayments)
+Roadmap (Next 30 Days)Real x402 + Celer testnet integration (live micropayments)
 
 LangChain & CrewAI official adapters (npm packages)
 
@@ -107,17 +108,17 @@ Open-source npm package @paymand/sdk
 Multi-chain support (Solana, Ethereum)
 
 
-##Contributing
+Contributing
 We welcome PRs! This project was built by a solo founder. Want to help ship the real on-chain version? Open an issue or DM on X.
 
-##LicenseMIT
+LicenseMIT
 License — feel free to fork, use, and build on top. Made with  for the agentic economy
 
-##Built by zerotestlab Part of the x402 + Celer agent payments movement.
+Built by zerotestlab Part of the x402 + Celer agent payments movement.
 
-##Star the repo if you believe agents should have economic autonomy.Ready to make agents pay?
+Star the repo if you believe agents should have economic autonomy.Ready to make agents pay?
 
-##Run the demo → Star → Build something crazy with Paymand.
+Run the demo → Star → Build something crazy with Paymand.
 
 
 
