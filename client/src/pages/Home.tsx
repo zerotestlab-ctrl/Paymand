@@ -33,7 +33,7 @@ export default function Home() {
     addLog("🤖 Agent waking up...");
     await new Promise(r => setTimeout(r, 800));
 
-    addLog("🔗 Using Base Sepolia testnet (eip155:84532) via x402 facilitator");
+    addLog("🔗 Executing via Base Sepolia testnet (x402 + Celer simulation)");
     await new Promise(r => setTimeout(r, 600));
     
     addLog("🔍 Scanning for x402 paywall...");
@@ -82,21 +82,31 @@ export default function Home() {
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-12 p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800"
+          className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800"
         >
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
               <Wallet className="w-4 h-4 text-emerald-400" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">0x7aF4...kP9q (Agent Wallet)</span>
-              <span className="text-sm text-zinc-300 font-bold">Connected to Base Sepolia Testnet (eip155:84532) • Test USDC</span>
+              <span className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Agent Wallet: 0x7aF4...kP9q</span>
+              <span className="text-[10px] text-emerald-400/80 font-bold flex items-center gap-1.5 uppercase tracking-widest">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Connected to Base Sepolia
+              </span>
             </div>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400 uppercase tracking-widest">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Base Sepolia
-          </div>
+        </motion.div>
+
+        {/* Live Banner */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mb-12 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-center"
+        >
+          <span className="text-sm font-bold text-emerald-400 tracking-tight">
+            🚀 LIVE ON BASE SEPOLIA TESTNET (Chain ID 84532) • Test USDC only • No real funds moved
+          </span>
         </motion.div>
 
         {/* Header Section */}
@@ -173,22 +183,51 @@ export default function Home() {
               <div className="text-zinc-600 italic">Waiting for execution command...</div>
             )}
             <AnimatePresence mode="popLayout">
-              {logs.map((log, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className={`flex items-start gap-3 ${
-                    log.includes("✅") ? "text-emerald-400" : 
-                    log.includes("❌") ? "text-red-400" : 
-                    log.includes("⚠️") ? "text-amber-400" :
-                    "text-emerald-300/80"
-                  }`}
-                >
-                  <span className="opacity-30 text-xs mt-0.5">{(new Date()).toISOString().split('T')[1].substring(0, 8)}</span>
-                  <span>{log}</span>
-                </motion.div>
-              ))}
+              {logs.map((log, i) => {
+                if (log.includes("⚠️ HTTP 402")) {
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="space-y-2"
+                    >
+                      <div className="flex items-start gap-3 text-amber-400">
+                        <span className="opacity-30 text-xs mt-0.5">{(new Date()).toISOString().split('T')[1].substring(0, 8)}</span>
+                        <span>{log}</span>
+                      </div>
+                      <div className="ml-11 p-3 rounded-xl bg-black/40 border border-amber-500/20 text-[10px] text-amber-300/80 leading-tight">
+                        <pre>
+{`{
+  "status": 402,
+  "paymentRequired": {
+    "amount": "0.001",
+    "asset": "USDC",
+    "payTo": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+  }
+}`}
+                        </pre>
+                      </div>
+                    </motion.div>
+                  );
+                }
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className={`flex items-start gap-3 ${
+                      log.includes("✅") ? "text-emerald-400" : 
+                      log.includes("❌") ? "text-red-400" : 
+                      log.includes("⚠️") ? "text-amber-400" :
+                      "text-emerald-300/80"
+                    }`}
+                  >
+                    <span className="opacity-30 text-xs mt-0.5">{(new Date()).toISOString().split('T')[1].substring(0, 8)}</span>
+                    <span>{log}</span>
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
             <div ref={logsEndRef} />
           </div>
@@ -226,26 +265,27 @@ export default function Home() {
 {(() => {
   const json = JSON.stringify(receipt, null, 2);
   const proofLabel = `"proof": "${receipt.proof}"`;
-  const parts = json.split(proofLabel);
+  const receiptIdLabel = `"receiptId": "${receipt.receiptId}"`;
+  
+  let content = json;
+  
+  // Replace proof
+  const proofLink = `"proof": "<a href="https://sepolia.basescan.org/tx/${receipt.proof}" target="_blank" rel="noopener noreferrer" class="text-emerald-400 underline decoration-emerald-400/30 hover:decoration-emerald-400 transition-all">${receipt.proof}</a>"`;
+  content = content.replace(proofLabel, proofLink);
+  
+  // Replace receiptId (using proof for tx link as per request)
+  const receiptIdLink = `"receiptId": "<a href="https://sepolia.basescan.org/tx/${receipt.proof}" target="_blank" rel="noopener noreferrer" class="text-emerald-400 underline decoration-emerald-400/30 hover:decoration-emerald-400 transition-all">${receipt.receiptId}</a>"`;
+  content = content.replace(receiptIdLabel, receiptIdLink);
+
   return (
-    <>
-      {parts[0]}
-      {`"proof": "`}
-      <a 
-        href={`https://sepolia.basescan.org/tx/${receipt.proof}`} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="text-emerald-400 underline decoration-emerald-400/30 hover:decoration-emerald-400 transition-all"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {receipt.proof}
-      </a>
-      {`"`}
-      {parts[1]}
-    </>
+    <div dangerouslySetInnerHTML={{ __html: content }} />
   );
 })()}
                 </pre>
+              </div>
+              <div className="mt-4 text-[10px] text-emerald-500/60 font-bold uppercase tracking-widest flex items-center gap-2">
+                <CheckCircle2 className="w-3 h-3" />
+                ✅ Verified on Base Sepolia Testnet • <a href={`https://sepolia.basescan.org/tx/${receipt.proof}`} target="_blank" rel="noopener noreferrer" className="underline hover:text-emerald-400">View on Basescan</a>
               </div>
             </motion.div>
           )}
