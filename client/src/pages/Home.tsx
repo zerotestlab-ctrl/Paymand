@@ -1,18 +1,38 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Terminal, CheckCircle2, Copy, Check, Wallet, ShieldCheck, ExternalLink } from "lucide-react";
-import { useCreateReceipt } from "@/hooks/use-receipts";
-import type { ReceiptResponse } from "@shared/routes";
-import { TransactionHistory } from "@/components/TransactionHistory";
+import { Play, Terminal, CheckCircle2, Copy, Check, Wallet, ShieldCheck, ExternalLink, Database, FileText, ArrowRight } from "lucide-react";
+import { format } from "date-fns";
+
+interface Receipt {
+  id: number;
+  receiptId: string;
+  amount: string;
+  channel: string;
+  proof: string;
+  description: string;
+  createdAt: string;
+}
 
 export default function Home() {
   const [logs, setLogs] = useState<string[]>([]);
-  const [receipt, setReceipt] = useState<ReceiptResponse | null>(null);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [history, setHistory] = useState<Receipt[]>([]);
   
-  const createReceipt = useCreateReceipt();
   const logsEndRef = useRef<HTMLDivElement>(null);
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("paymand_history");
+    if (saved) {
+      try {
+        setHistory(JSON.parse(saved));
+      } catch (e) {
+        console.error("Failed to parse history", e);
+      }
+    }
+  }, []);
 
   // Auto-scroll logs to bottom
   useEffect(() => {
@@ -45,27 +65,29 @@ export default function Home() {
     addLog("💰 Found premium service • 0.001 USDC");
     await new Promise(r => setTimeout(r, 800));
 
-    try {
-      const proofHex = "0x" + Array.from({length: 40}, () => Math.floor(Math.random() * 16).toString(16)).join("");
-      
-      const result = await createReceipt.mutateAsync({
-        amount: "0.001",
-        channel: "celer",
-        description: "Real-time inference data",
-        proof: proofHex,
-        receiptId: "paymand_" + Date.now()
-      });
+    // Simulate instant client-side success
+    const proofHex = "0x" + Array.from({length: 40}, () => Math.floor(Math.random() * 16).toString(16)).join("");
+    const newReceipt: Receipt = {
+      id: Date.now(),
+      amount: "0.001",
+      channel: "celer",
+      description: "Real-time inference data",
+      proof: proofHex,
+      receiptId: "paymand_" + Date.now(),
+      createdAt: new Date().toISOString()
+    };
 
-      addLog(`✅ Paid instantly via ${result.channel}`);
-      addLog("📦 Service unlocked — agent continues");
-      
-      setReceipt(result);
-    } catch (error) {
-      addLog("❌ Error: Failed to process mandate payment");
-      console.error(error);
-    } finally {
-      setIsRunning(false);
-    }
+    addLog(`✅ Paid instantly via ${newReceipt.channel}`);
+    addLog("📦 Service unlocked — agent continues");
+    
+    setReceipt(newReceipt);
+    
+    // Update history and localStorage
+    const updatedHistory = [newReceipt, ...history];
+    setHistory(updatedHistory);
+    localStorage.setItem("paymand_history", JSON.stringify(updatedHistory));
+    
+    setIsRunning(false);
   };
 
   const copyCode = () => {
@@ -264,9 +286,6 @@ export default function Home() {
                 <pre className="text-emerald-300/90 leading-relaxed group-hover/receipt:text-emerald-300 transition-colors">
 {(() => {
   const json = JSON.stringify(receipt, null, 2);
-  const proofLabel = `"proof": "${receipt.proof}"`;
-  const receiptIdLabel = `"receiptId": "${receipt.receiptId}"`;
-  
   let content = json;
   
   // Replace proof
@@ -326,8 +345,63 @@ export default function Home() {
           </div>
         </motion.div>
 
-        {/* Transaction History Section */}
-        <TransactionHistory />
+        {/* Ledger Section (Integrated Transaction History) */}
+        <div className="space-y-4 mt-16">
+          <div className="flex items-center justify-between pb-4 border-b border-zinc-800/50">
+            <h2 className="text-lg font-bold flex items-center gap-2 text-zinc-300">
+              <Database className="w-5 h-5 text-emerald-500" />
+              Ledger
+            </h2>
+            <div className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              {history.length} entries
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {history.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-12 rounded-3xl border border-zinc-800 border-dashed text-zinc-500 bg-zinc-900/30">
+                <Database className="w-8 h-8 mb-4 opacity-20" />
+                <p className="text-sm">No transactions yet.</p>
+                <p className="text-xs opacity-50 mt-1">Run the demo to generate your first receipt.</p>
+              </div>
+            ) : (
+              <AnimatePresence mode="popLayout">
+                {history.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={() => window.open(`https://sepolia.basescan.org/tx/${item.proof}`, '_blank')}
+                    className="group p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:border-emerald-500/30 hover:bg-zinc-900 transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
+                  >
+                    <div className="flex items-start sm:items-center gap-4">
+                      <div className="p-2 rounded-xl bg-zinc-950 border border-zinc-800 group-hover:border-emerald-500/30 transition-colors">
+                        <FileText className="w-4 h-4 text-emerald-400/70" />
+                      </div>
+                      <div>
+                        <div className="text-sm text-zinc-300 flex items-center gap-2">
+                          <span className="text-emerald-400 font-medium">{item.amount} USDC</span>
+                          <ArrowRight className="w-3 h-3 text-zinc-600" />
+                          <span className="text-zinc-400">{item.description}</span>
+                        </div>
+                        <div className="text-xs text-zinc-600 mt-1 flex items-center gap-2">
+                          <span className="truncate max-w-[100px]">{item.receiptId}</span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1 group-hover:text-emerald-400/70 transition-colors">
+                            {item.proof.substring(0, 10)}... <ExternalLink className="w-2.5 h-2.5" />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-zinc-600 font-mono text-right shrink-0 bg-zinc-950/50 px-3 py-1.5 rounded-lg border border-zinc-800/50 group-hover:border-emerald-500/10 transition-colors">
+                      {format(new Date(item.createdAt), "MMM d, HH:mm:ss")}
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            )}
+          </div>
+        </div>
 
         {/* Footer Badge */}
         <footer className="mt-8 md:mt-12 mb-16 md:mb-24 flex justify-center w-full">
