@@ -19,7 +19,7 @@ Give any agent (LangChain, CrewAI, AutoGen, or custom) the power to discover ser
 Built as a full-stack TypeScript demo with real testnet visuals (Base Sepolia), persistent transaction ledger, and beautiful agent terminal UI. Perfect for hackathons, investors, and early adopters in the exploding agentic economy.
 
 **Live Demo** (click to try instantly):  
-[https://ec503fed-2d64-4c48-9030-1285735ec8a8-00-29776a75j15ku.riker.replit.dev/](https://ec503fed-2d64-4c48-9030-1285735ec8a8-00-29776a75j15ku.riker.replit.dev/)
+https://paymand.vercel.app/
 
 ---
 
