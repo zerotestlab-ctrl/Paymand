@@ -112,7 +112,7 @@ Contributing
 We welcome PRs! This project was built by a solo founder. Want to help ship the real on-chain version? Open an issue or DM on X.
 
 LicenseMIT
-License — feel free to fork, use, and build on top. Made with  for the agentic economy
+License — feel free to fork, use, and build on top. Made with love for the agentic economy
 
 Built by zerotestlab Part of the x402 + Celer agent payments movement.
 
